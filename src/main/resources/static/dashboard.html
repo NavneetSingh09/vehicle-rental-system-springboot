@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard</title>
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+    body{background:#121321;color:#36bebe;}
+
+    section{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      overflow:hidden;
+      padding:40px;
+      perspective: 2000px;
+    }
+
+    section::after{
+      content:"";
+      position:absolute;
+      height:260px;width:260px;border-radius:50%;
+      transform: translate(-240px, -160px);
+      background: linear-gradient(50deg, rgb(182, 26, 26), white, black);
+      opacity:0.9;
+    }
+    section::before{
+      content:"";
+      position:absolute;
+      height:260px;width:260px;border-radius:50%;
+      transform: translate(260px, 160px);
+      background: linear-gradient(67deg, purple, white);
+      opacity:0.9;
+    }
+
+    .card{
+      width:1000px;
+      max-width:95vw;
+      background:rgba(255,255,255,0.08);
+      backdrop-filter:blur(30px);
+      border-radius:24px;
+      padding:26px;
+      box-shadow:0 12px 45px rgba(0,0,0,0.35);
+      position:relative;
+      z-index:1;
+      border:1px solid rgba(255,255,255,0.10);
+    }
+
+    .top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:16px;
+    }
+    h2{font-size:26px;}
+    .sub{opacity:0.85;margin-top:6px}
+
+    .btn{
+      padding:10px 14px;
+      border-radius:12px;
+      border:none;
+      cursor:pointer;
+      background:#36bebe;
+      color:#121321;
+      font-weight:bold;
+    }
+    .btn.secondary{
+      background:rgba(255,255,255,0.15);
+      color:#36bebe;
+      border:1px solid rgba(255,255,255,0.18);
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:12px;
+      margin-top:14px;
+      margin-bottom:18px;
+    }
+    @media (max-width: 900px){
+      .stats{grid-template-columns: repeat(2, minmax(0, 1fr));}
+    }
+    .stat{
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.10);
+    }
+    .stat .label{opacity:0.8;font-size:12px;}
+    .stat .value{font-size:22px;font-weight:bold;margin-top:6px;color:#fff;}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:16px;
+      margin-top:6px;
+    }
+    @media (max-width: 900px){
+      .grid{grid-template-columns:1fr;}
+    }
+
+    /* FLIP TILE */
+    .flipWrap{
+      height: 210px;
+      perspective: 1800px;
+    }
+    .flip{
+      position:relative;
+      width:100%;
+      height:100%;
+      transform-style: preserve-3d;
+      transition: transform 0.65s ease;
+    }
+    .flipWrap:hover .flip{
+      transform: rotateY(180deg);
+    }
+
+    .face{
+      position:absolute;
+      inset:0;
+      border-radius:22px;
+      padding:18px;
+      background:rgba(0,0,0,0.22);
+      border:1px solid rgba(255,255,255,0.12);
+      backface-visibility:hidden;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      overflow:hidden;
+    }
+
+    .face::after{
+      content:"";
+      position:absolute;
+      inset:-40px -40px auto auto;
+      width:160px;height:160px;border-radius:50%;
+      background:rgba(255,255,255,0.06);
+      transform: rotate(20deg);
+    }
+
+    .front .icon{font-size:26px;margin-bottom:6px;z-index:1;}
+    .front h3{font-size:18px;margin-bottom:6px;z-index:1;}
+    .front p{opacity:0.85;font-size:13px;line-height:1.4;z-index:1;}
+
+    .back{
+      transform: rotateY(180deg);
+      background:rgba(255,255,255,0.06);
+    }
+    .back h4{font-size:14px;opacity:0.95;margin-bottom:10px;}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;}
+    .mini{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.16);
+      background:rgba(0,0,0,0.18);
+      color:#36bebe;
+      cursor:pointer;
+      font-weight:bold;
+    }
+    .mini.primary{
+      background:#36bebe;color:#121321;border:none;
+    }
+    .hint{
+      margin-top:14px;
+      opacity:0.75;
+      font-size:12px;
+    }
+  </style>
+</head>
+
+<body>
+<section>
+  <div class="card">
+    <div class="top">
+      <div>
+        <h2>🚘 Vehicle Rental System</h2>
+        <div class="sub">Flip tiles for quick actions.</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn secondary" onclick="refreshStats()">↻ Refresh</button>
+        <button class="btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="label">Total Vehicles</div>
+        <div class="value" id="statVehicles">—</div>
+      </div>
+      <div class="stat">
+        <div class="label">Available Vehicles</div>
+        <div class="value" id="statAvailable">—</div>
+      </div>
+      <div class="stat">
+        <div class="label">Total Customers</div>
+        <div class="value" id="statCustomers">—</div>
+      </div>
+      <div class="stat">
+        <div class="label">Active Orders</div>
+        <div class="value" id="statActiveOrders">—</div>
+      </div>
+    </div>
+
+    <!-- Flip Tiles -->
+    <div class="grid">
+
+      <!-- Vehicles -->
+      <div class="flipWrap">
+        <div class="flip">
+          <div class="face front">
+            <div>
+              <div class="icon">🚗</div>
+              <h3>Vehicles</h3>
+              <p>Add / view vehicles and control availability.</p>
+            </div>
+            <div class="hint">Hover to flip →</div>
+          </div>
+
+          <div class="face back">
+            <div>
+              <h4>Quick actions</h4>
+              <div class="actions">
+                <button class="mini primary" onclick="go('vehicles.html')">Open</button>
+                <button class="mini" onclick="go('vehicles.html')">Add Vehicle</button>
+                <button class="mini" onclick="go('vehicles.html')">View List</button>
+              </div>
+            </div>
+            <div class="hint">Tip: Delete unused test cars.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customers -->
+      <div class="flipWrap">
+        <div class="flip">
+          <div class="face front">
+            <div>
+              <div class="icon">👤</div>
+              <h3>Customers</h3>
+              <p>Create customer profiles and discounts.</p>
+            </div>
+            <div class="hint">Hover to flip →</div>
+          </div>
+
+          <div class="face back">
+            <div>
+              <h4>Quick actions</h4>
+              <div class="actions">
+                <button class="mini primary" onclick="go('customers.html')">Open</button>
+                <button class="mini" onclick="go('customers.html')">Add Customer</button>
+                <button class="mini" onclick="go('customers.html')">View List</button>
+              </div>
+            </div>
+            <div class="hint">Tip: Use discountRate like 0.10 for 10%.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orders -->
+      <div class="flipWrap">
+        <div class="flip">
+          <div class="face front">
+            <div>
+              <div class="icon">🧾</div>
+              <h3>Orders</h3>
+              <p>Rent vehicles, calculate cost, complete returns.</p>
+            </div>
+            <div class="hint">Hover to flip →</div>
+          </div>
+
+          <div class="face back">
+            <div>
+              <h4>Quick actions</h4>
+              <div class="actions">
+                <button class="mini primary" onclick="go('orders.html')">Open</button>
+                <button class="mini" onclick="go('orders.html')">Create Order</button>
+                <button class="mini" onclick="go('orders.html')">View Orders</button>
+              </div>
+            </div>
+            <div class="hint">Tip: Complete ACTIVE order to free vehicle.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="hint" style="margin-top:16px;">
+      If Orders vehicle dropdown is empty: no vehicles are available. Complete an ACTIVE order first.
+    </div>
+  </div>
+</section>
+
+
+
+<script>
+  const API = "http://localhost:8080/api";
+
+  function requireLogin(allowedRoles){
+    const token = localStorage.getItem("token");
+    const role  = localStorage.getItem("role");
+    if(!token){ window.location.href="index.html"; return; }
+    if(allowedRoles && !allowedRoles.includes(role)){
+      alert("Access denied for role: " + role);
+      window.location.href="index.html";
+    }
+  }
+
+  function authHeaders(extra = {}) {
+    return { "Authorization": "Bearer " + localStorage.getItem("token"), ...extra };
+  }
+
+  function go(page){ window.location.href = page; }
+
+  function logout(){
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    window.location.href="index.html";
+  }
+
+  requireLogin(["ADMIN"]);
+
+  async function refreshStats(){
+    try{
+      const [vRes, aRes, cRes, oRes] = await Promise.all([
+        fetch(API + "/vehicles", { headers: authHeaders() }),
+        fetch(API + "/vehicles/available", { headers: authHeaders() }),
+        fetch(API + "/customers", { headers: authHeaders() }),
+        fetch(API + "/orders", { headers: authHeaders() })
+      ]);
+
+      const vehicles = await vRes.json();
+      const available = await aRes.json();
+      const customers = await cRes.json();
+      const orders = await oRes.json();
+
+      const activeOrders = orders.filter(o => o.status === "ACTIVE");
+
+      document.getElementById("statVehicles").innerText = vehicles.length;
+      document.getElementById("statAvailable").innerText = available.length;
+      document.getElementById("statCustomers").innerText = customers.length;
+      document.getElementById("statActiveOrders").innerText = activeOrders.length;
+
+    } catch(e){
+      console.log(e);
+      document.getElementById("statVehicles").innerText = "—";
+      document.getElementById("statAvailable").innerText = "—";
+      document.getElementById("statCustomers").innerText = "—";
+      document.getElementById("statActiveOrders").innerText = "—";
+    }
+  }
+
+  refreshStats();
+</script>
+
+
+</body>
+</html>

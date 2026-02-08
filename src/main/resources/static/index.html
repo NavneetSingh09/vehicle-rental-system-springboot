@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VRMS Login</title>
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+    body{
+  margin:0;
+  background: url("BMW_BG.jpg") no-repeat center center fixed;
+  background-size: cover;
+  color:#36bebe;
+}
+
+
+    section{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      overflow:hidden;
+      padding:40px;
+      perspective:2000px;
+    }
+
+    section::after{
+      content:"";
+      position:absolute;
+      height:260px;width:260px;border-radius:50%;
+      transform: translate(-240px, -160px);
+      background: linear-gradient(50deg, rgb(182, 26, 26), white, black);
+      opacity:0.9;
+    }
+    /* section::before{
+      content:"";
+      position:absolute;
+      height:260px;width:260px;border-radius:50%;
+      transform: translate(260px, 160px);
+      background: linear-gradient(67deg, purple, white);
+      opacity:0.9;
+    } */
+section::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.55); /* adjust darkness */
+  z-index:1;
+}
+
+    .shell{
+      width:420px;
+      max-width:95vw;
+      position:relative;
+      z-index:2;
+    }
+
+    .brand{
+      margin-bottom:14px;
+      text-align:center;
+    }
+    .brand h1{
+      font-size:26px;
+      color:#fff;
+      letter-spacing:0.2px;
+    }
+    .brand p{
+      margin-top:6px;
+      opacity:0.8;
+      font-size:12px;
+    }
+
+    .card{
+      background:rgba(255,255,255,0.08);
+      backdrop-filter:blur(30px);
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius:24px;
+      padding:22px;
+      box-shadow:0 12px 45px rgba(0,0,0,0.35);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      width:220px;height:220px;
+      border-radius:50%;
+      right:-110px;top:-110px;
+      background:rgba(255,255,255,0.06);
+      transform:rotate(20deg);
+    }
+
+    .tabs{
+      display:flex;
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .tab{
+      flex:1;
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(0,0,0,0.18);
+      color:#36bebe;
+      font-weight:bold;
+      text-align:center;
+      user-select:none;
+    }
+    .tab.active{
+      background:#36bebe;
+      color:#121321;
+      border:none;
+    }
+
+    .msg{
+      min-height:18px;
+      margin:8px 0 12px;
+      font-size:12px;
+      color:#fff;
+      opacity:0.9;
+    }
+
+    .field{
+      margin-top:10px;
+    }
+    .label{
+      font-size:12px;
+      opacity:0.85;
+      margin-bottom:6px;
+    }
+    input{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:rgba(0,0,0,0.25);
+      color:#36bebe;
+      outline:none;
+    }
+    input::placeholder{color:rgba(54,190,190,0.6);}
+
+    .row{
+      display:flex;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    button{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:none;
+      cursor:pointer;
+      font-weight:bold;
+    }
+    .primary{
+      background:#36bebe;
+      color:#121321;
+    }
+    .secondary{
+      background:rgba(255,255,255,0.12);
+      color:#36bebe;
+      border:1px solid rgba(255,255,255,0.16);
+    }
+
+    .footer{
+      margin-top:12px;
+      text-align:center;
+      font-size:12px;
+      opacity:0.75;
+    }
+
+    .tiny{
+      margin-top:8px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:12px;
+      opacity:0.8;
+    }
+    .link{
+      cursor:pointer;
+      text-decoration:underline;
+    }
+  </style>
+</head>
+
+<body>
+<section>
+  <div class="shell">
+    <div class="brand">
+      <h1>🚘 VRMS</h1>
+      <p>Vehicle Rental Management System</p>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <div id="tabLogin" class="tab active" onclick="setMode('login')">Login</div>
+        <div id="tabRegister" class="tab" onclick="setMode('register')">Register</div>
+      </div>
+
+      <div id="message" class="msg"></div>
+
+      <div class="field">
+        <div class="label">Email</div>
+        <input type="email" id="email" placeholder="admin@vrms.com" />
+      </div>
+
+      <div class="field">
+        <div class="label">Password</div>
+        <input type="password" id="password" placeholder="••••••••" />
+      </div>
+
+      <div class="row">
+        <button id="submitBtn" class="primary" onclick="submitAuth()">Login</button>
+      </div>
+
+      <div class="tiny">
+        <div class="link" onclick="fillAdmin()">Use Admin Demo</div>
+        <div class="link" onclick="fillCustomer()">Use Customer Demo</div>
+      </div>
+
+      <div class="footer" id="footerText">
+        New here? Switch to <span class="link" onclick="setMode('register')">Register</span>.
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const API = "http://localhost:8080/api";
+  let mode = "login"; // or "register"
+
+  function setMsg(t){ document.getElementById("message").innerText = t || ""; }
+
+  function setMode(m){
+    mode = m;
+
+    document.getElementById("tabLogin").classList.toggle("active", mode === "login");
+    document.getElementById("tabRegister").classList.toggle("active", mode === "register");
+
+    document.getElementById("submitBtn").innerText = mode === "login" ? "Login" : "Register";
+    document.getElementById("footerText").innerHTML =
+      mode === "login"
+        ? `New here? Switch to <span class="link" onclick="setMode('register')">Register</span>.`
+        : `Already have an account? Switch to <span class="link" onclick="setMode('login')">Login</span>.`;
+
+    setMsg("");
+  }
+
+  function getFormData(){
+    return {
+      email: document.getElementById("email").value.trim(),
+      password: document.getElementById("password").value
+    };
+  }
+
+  async function submitAuth(){
+    const data = getFormData();
+    if(!data.email || !data.password){
+      setMsg("⚠ Please enter email and password.");
+      return;
+    }
+
+    if(mode === "register") return register(data);
+    return login(data);
+  }
+
+  async function register(data){
+    const res = await fetch(API + "/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    const text = await res.text();
+    if(!res.ok){
+      setMsg("❌ " + text);
+      return;
+    }
+
+    setMsg("✅ " + text + " Now login.");
+    setMode("login");
+  }
+
+  async function login(data){
+    const res = await fetch(API + "/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    if(!res.ok){
+      const t = await res.text();
+      setMsg("❌ Login failed. " + (t || ""));
+      return;
+    }
+
+    const json = await res.json(); // { token, role }
+    localStorage.setItem("token", json.token);
+    localStorage.setItem("role", json.role);
+
+    if(json.role === "ADMIN") window.location.href = "dashboard.html";
+    else window.location.href = "orders.html";
+  }
+
+  // Optional quick-fill helpers (change values if your seeded admin differs)
+  function fillAdmin(){
+    document.getElementById("email").value = "admin@vrms.com";
+    document.getElementById("password").value = "Admin@123";
+    setMode("login");
+    setMsg("Loaded admin demo credentials.");
+  }
+
+  function fillCustomer(){
+    document.getElementById("email").value = "customer@test.com";
+    document.getElementById("password").value = "pass123";
+    setMode("login");
+    setMsg("Loaded customer demo credentials (make sure it exists).");
+  }
+
+  // If already logged in, go directly
+  (function autoRedirect(){
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    if(token && role){
+      if(role === "ADMIN") window.location.href = "dashboard.html";
+      else window.location.href = "orders.html";
+    }
+  })();
+</script>
+
+</body>
+</html>

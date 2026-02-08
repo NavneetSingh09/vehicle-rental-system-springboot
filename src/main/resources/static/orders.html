@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Orders</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+    body{background:#121321;color:#36bebe;}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px;}
+    .card{width:1000px;max-width:95vw;background:rgba(255,255,255,0.08);backdrop-filter:blur(30px);
+      border-radius:24px;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,0.35);}
+    h2{margin-bottom:16px;}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+    input,select{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);
+      background:rgba(0,0,0,0.25);color:#36bebe;outline:none;}
+    button{padding:10px 14px;border-radius:12px;border:none;cursor:pointer;background:#36bebe;color:#121321;font-weight:bold;}
+    button.secondary{background:rgba(255,255,255,0.15);color:#36bebe;border:1px solid rgba(255,255,255,0.18);}
+    table{width:100%;border-collapse:collapse;margin-top:14px;}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.12);text-align:left;}
+    .pill{padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.12);display:inline-block;}
+    .msg{margin:10px 0;color:#fff;}
+    .pill-active { border: 1px solid rgba(0,255,200,0.35); }
+.pill-completed { border: 1px solid rgba(150,150,255,0.35); opacity: 0.85; }
+.pill-cancelled { border: 1px solid rgba(255,80,80,0.35); opacity: 0.85; }
+
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="row" style="justify-content:space-between;">
+      <h2>🧾 Rental Orders</h2>
+      <button class="secondary" onclick="goDashboard()">⬅ Dashboard</button>
+      <button class="secondary" onclick="logout()">Logout</button>
+
+    </div>
+
+    <div class="msg" id="message"></div>
+
+    <h3>Create Order (Rent Vehicle)</h3>
+    <div class="row">
+      <select id="customerSelect"></select>
+      <select id="vehicleSelect"></select>
+      <input id="startDate" type="date" />
+      <input id="endDate" type="date" />
+      <button onclick="createOrder()">Create</button>
+    </div>
+
+    <div class="row">
+      <button onclick="loadOrders()">Refresh Orders</button>
+      <button class="secondary" onclick="reloadDropdowns()">Reload Customers/Vehicles</button>
+    </div>
+
+    <select id="statusFilter" onchange="loadOrders()">
+  <option value="ALL">ALL</option>
+  <option value="ACTIVE">ACTIVE</option>
+  <option value="COMPLETED">COMPLETED</option>
+</select>
+
+
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Customer</th>
+          <th>Vehicle</th>
+          <th>Dates</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const API = "http://localhost:8080/api";
+
+  function requireLogin(allowedRoles){
+    const token = localStorage.getItem("token");
+    const role  = localStorage.getItem("role");
+    if(!token){ window.location.href="index.html"; return; }
+    if(allowedRoles && !allowedRoles.includes(role)){
+      alert("Access denied for role: " + role);
+      window.location.href="index.html";
+    }
+  }
+
+  function authHeaders(extra = {}) {
+    return { "Authorization": "Bearer " + localStorage.getItem("token"), ...extra };
+  }
+
+  function setMsg(t){ document.getElementById("message").innerText = t || ""; }
+
+  function logout(){
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    window.location.href="index.html";
+  }
+
+  function goDashboard(){
+    const role = localStorage.getItem("role");
+    if(role === "ADMIN") window.location.href="dashboard.html";
+    else window.location.href="orders.html";
+  }
+
+  requireLogin(["ADMIN","CUSTOMER"]);
+
+  const role = localStorage.getItem("role");
+
+  async function reloadDropdowns(){
+    if(role === "ADMIN"){
+      // admin: load customers + all vehicles
+      document.getElementById("customerSelect").style.display = "inline-block";
+      await loadCustomersIntoSelect();
+      await loadVehiclesIntoSelectAdmin();
+    } else {
+      // customer: hide customer dropdown + load public available vehicles
+      document.getElementById("customerSelect").style.display = "none";
+      await loadVehiclesIntoSelectCustomer();
+    }
+  }
+
+  async function loadCustomersIntoSelect(){
+    const res = await fetch(API + "/customers", { headers: authHeaders() });
+    const customers = await res.json();
+    const sel = document.getElementById("customerSelect");
+    sel.innerHTML = "";
+    customers.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = `${c.id} - ${c.name} (${c.customerType})`;
+      sel.appendChild(opt);
+    });
+  }
+
+  async function loadVehiclesIntoSelectAdmin(){
+    const res = await fetch(API + "/vehicles", { headers: authHeaders() });
+    const vehicles = await res.json();
+    const sel = document.getElementById("vehicleSelect");
+    sel.innerHTML = "";
+
+    vehicles.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.id;
+      const rate = Number(v.dailyRate).toFixed(2);
+      opt.textContent = v.available
+        ? `${v.id} - ${v.make} ${v.model} [${v.type}] $${rate}/day`
+        : `${v.id} - ${v.make} ${v.model} [${v.type}] (NOT AVAILABLE)`;
+      if(!v.available) opt.disabled = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  async function loadVehiclesIntoSelectCustomer(){
+    const res = await fetch(API + "/vehicles/public", { headers: authHeaders() });
+    const vehicles = await res.json();
+    const sel = document.getElementById("vehicleSelect");
+    sel.innerHTML = "";
+
+    vehicles.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.id;
+      const rate = Number(v.dailyRate).toFixed(2);
+      opt.textContent = `${v.make} ${v.model} [${v.type}] $${rate}/day`;
+      sel.appendChild(opt);
+    });
+
+    if(vehicles.length === 0){
+      setMsg("⚠ No vehicles available right now. Try later.");
+    }
+  }
+
+  async function createOrder(){
+    const vehicleId = Number(document.getElementById("vehicleSelect").value);
+    const startDate = document.getElementById("startDate").value;
+    const endDate = document.getElementById("endDate").value;
+
+    if(!vehicleId || !startDate || !endDate){
+      setMsg("⚠ Select vehicle, startDate, endDate.");
+      return;
+    }
+
+    const body = { vehicleId, startDate, endDate };
+
+    // admin must include customerId
+    if(role === "ADMIN"){
+      const customerId = Number(document.getElementById("customerSelect").value);
+      if(!customerId){ setMsg("⚠ Select a customer."); return; }
+      body.customerId = customerId;
+    }
+
+    const res = await fetch(API + "/orders", {
+      method:"POST",
+      headers: authHeaders({ "Content-Type":"application/json" }),
+      body: JSON.stringify(body)
+    });
+
+    if(!res.ok){
+      const txt = await res.text();
+      setMsg("❌ Order failed: " + txt);
+      return;
+    }
+
+    const order = await res.json();
+    setMsg("✅ Order created! Total: $" + Number(order.totalCost).toFixed(2));
+
+    await loadOrders();
+    await reloadDropdowns();
+  }
+
+  function pillClass(status){
+    if(status === "ACTIVE") return "pill-active";
+    if(status === "COMPLETED") return "pill-completed";
+    if(status === "CANCELLED") return "pill-cancelled";
+    return "";
+  }
+
+  async function loadOrders(){
+    setMsg("");
+    const res = await fetch(API + "/orders", { headers: authHeaders() });
+    if(!res.ok){ setMsg("❌ Unauthorized."); return; }
+
+    const orders = await res.json();
+    const tb = document.getElementById("tbody");
+    tb.innerHTML = "";
+
+    orders.forEach(o => {
+      const tr = document.createElement("tr");
+      const vehicleLabel = `${o.vehicle.make} ${o.vehicle.model} (${o.vehicle.type})`;
+      const custLabel = `${o.customer.name}`;
+      const dates = `${o.startDate} → ${o.endDate}`;
+
+      tr.innerHTML = `
+        <td>${o.id}</td>
+        <td>${custLabel}</td>
+        <td>${vehicleLabel}</td>
+        <td>${dates}</td>
+        <td>$${Number(o.totalCost).toFixed(2)}</td>
+        <td><span class="pill ${pillClass(o.status)}">${o.status}</span></td>
+        <td>
+          ${o.status === "ACTIVE"
+            ? `<button class="secondary" onclick="complete(${o.id})">Complete</button>`
+            : `—`}
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+  }
+
+  async function complete(orderId){
+    const res = await fetch(API + "/orders/" + orderId + "/complete", {
+      method:"POST",
+      headers: authHeaders()
+    });
+
+    if(!res.ok){
+      const txt = await res.text();
+      setMsg("❌ Complete failed: " + txt);
+      return;
+    }
+
+    setMsg("✅ Order completed: " + orderId);
+    await loadOrders();
+    await reloadDropdowns();
+  }
+
+  (async function init(){
+    await reloadDropdowns();
+    await loadOrders();
+  })();
+</script>
+
+
+</body>
+</html>
