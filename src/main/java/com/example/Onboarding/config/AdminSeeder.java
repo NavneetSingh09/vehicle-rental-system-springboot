@@ -3,6 +3,7 @@ package com.example.Onboarding.config;
 import com.example.Onboarding.Entity.Role;
 import com.example.Onboarding.Entity.User;
 import com.example.Onboarding.repo.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -11,17 +12,21 @@ import org.springframework.stereotype.Component;
 public class AdminSeeder implements CommandLineRunner {
 
     private final UserRepository userRepo;
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    private final BCryptPasswordEncoder encoder;
 
-    public AdminSeeder(UserRepository userRepo) {
+    @Value("${admin.email}")
+    private String adminEmail;
+
+    @Value("${admin.password}")
+    private String adminPass;
+
+    public AdminSeeder(UserRepository userRepo, BCryptPasswordEncoder encoder) {
         this.userRepo = userRepo;
+        this.encoder = encoder;
     }
 
     @Override
     public void run(String... args) {
-        String adminEmail = "admin@vrms.com";
-        String adminPass  = "Admin@123";  // change later
-
         if (userRepo.findByEmail(adminEmail).isPresent()) return;
 
         User admin = new User();
@@ -31,6 +36,6 @@ public class AdminSeeder implements CommandLineRunner {
 
         userRepo.save(admin);
 
-        System.out.println("✅ Seeded ADMIN: " + adminEmail + " / " + adminPass);
+        System.out.println("✅ Seeded ADMIN user: " + adminEmail);
     }
 }

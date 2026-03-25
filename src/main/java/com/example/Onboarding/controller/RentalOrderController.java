@@ -6,9 +6,10 @@ import com.example.Onboarding.repo.CustomerRepository;
 import com.example.Onboarding.repo.RentalOrderRepository;
 import com.example.Onboarding.repo.VehicleRepository;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.transaction.Transactional;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -47,8 +48,9 @@ public List<RentalOrder> all(org.springframework.security.core.Authentication au
     }
 
     // RENT a vehicle
-   @PostMapping
-public RentalOrder create(@RequestBody CreateOrderRequest req,
+   @Transactional          // ← added
+@PostMapping
+public RentalOrder create(@Valid @RequestBody CreateOrderRequest req,
                           org.springframework.security.core.Authentication auth) {
 
     String email = auth.getName();
@@ -93,6 +95,7 @@ public RentalOrder create(@RequestBody CreateOrderRequest req,
 
 
     // RETURN vehicle
+    @Transactional
    @PostMapping("/{id}/complete")
 public RentalOrder complete(@PathVariable Long id,
                             org.springframework.security.core.Authentication auth) {

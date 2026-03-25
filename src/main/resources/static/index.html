@@ -219,10 +219,7 @@ section::before{
         <button id="submitBtn" class="primary" onclick="submitAuth()">Login</button>
       </div>
 
-      <div class="tiny">
-        <div class="link" onclick="fillAdmin()">Use Admin Demo</div>
-        <div class="link" onclick="fillCustomer()">Use Customer Demo</div>
-      </div>
+      
 
       <div class="footer" id="footerText">
         New here? Switch to <span class="link" onclick="setMode('register')">Register</span>.
@@ -308,20 +305,7 @@ section::before{
     else window.location.href = "orders.html";
   }
 
-  // Optional quick-fill helpers (change values if your seeded admin differs)
-  function fillAdmin(){
-    document.getElementById("email").value = "admin@vrms.com";
-    document.getElementById("password").value = "Admin@123";
-    setMode("login");
-    setMsg("Loaded admin demo credentials.");
-  }
-
-  function fillCustomer(){
-    document.getElementById("email").value = "customer@test.com";
-    document.getElementById("password").value = "pass123";
-    setMode("login");
-    setMsg("Loaded customer demo credentials (make sure it exists).");
-  }
+  
 
   // If already logged in, go directly
   (function autoRedirect(){

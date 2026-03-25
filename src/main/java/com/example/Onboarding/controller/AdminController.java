@@ -6,6 +6,7 @@ import com.example.Onboarding.dto.CreateUserRequest;
 import com.example.Onboarding.repo.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -13,15 +14,16 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final UserRepository userRepo;
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    private final BCryptPasswordEncoder encoder;   // ← no more = new BCryptPasswordEncoder()
 
-    public AdminController(UserRepository userRepo) {
+    public AdminController(UserRepository userRepo,
+                           BCryptPasswordEncoder encoder) {  // ← injected
         this.userRepo = userRepo;
+        this.encoder = encoder;
     }
-
     // ✅ Only admin can call this (we’ll enforce in SecurityConfig)
     @PostMapping("/users")
-    public String createUser(@RequestBody CreateUserRequest req) {
+    public String createUser(@Valid @RequestBody CreateUserRequest req) {
 
         if (userRepo.findByEmail(req.getEmail()).isPresent()) {
             return "Email already exists!";

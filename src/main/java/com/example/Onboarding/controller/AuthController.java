@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import com.example.Onboarding.Entity.Customer;
 import com.example.Onboarding.Entity.CustomerType;
 import com.example.Onboarding.repo.CustomerRepository;
-
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 
 import java.util.Optional;
 
@@ -22,45 +23,45 @@ public class AuthController {
 
     private final UserRepository userRepo;
     private final JwtService jwtService;
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
+    private final BCryptPasswordEncoder encoder;   // ← no more = new BCryptPasswordEncoder()
     private final CustomerRepository customerRepo;
 
-public AuthController(UserRepository userRepo, JwtService jwtService, CustomerRepository customerRepo) {
-    this.userRepo = userRepo;
-    this.jwtService = jwtService;
-    this.customerRepo = customerRepo;
-}
+    public AuthController(UserRepository userRepo,
+                          JwtService jwtService,
+                          CustomerRepository customerRepo,
+                          BCryptPasswordEncoder encoder) {  // ← injected
+        this.userRepo = userRepo;
+        this.jwtService = jwtService;
+        this.customerRepo = customerRepo;
+        this.encoder = encoder;
+    }
 
-
+    @Transactional
 @PostMapping("/register")
-public String register(@RequestBody AuthRequest req) {
+public String register(@Valid @RequestBody AuthRequest req) {
 
-    Optional<User> existing = userRepo.findByEmail(req.getEmail());
-    if (existing.isPresent()) return "Email already registered!";
+        Optional<User> existing = userRepo.findByEmail(req.getEmail());
+        if (existing.isPresent()) return "Email already registered!";
 
-    // ✅ 1) Create USER
-    User u = new User();
-    u.setEmail(req.getEmail());
-    u.setPassword(encoder.encode(req.getPassword()));
-    u.setRole(Role.CUSTOMER);           // public register = CUSTOMER only
-    userRepo.save(u);                   // ✅ save user first
+        User u = new User();
+        u.setEmail(req.getEmail());
+        u.setPassword(encoder.encode(req.getPassword()));
+        u.setRole(Role.CUSTOMER);
+        userRepo.save(u);
 
-    // ✅ 2) Create CUSTOMER profile (linked by same email)
-    Customer c = new Customer();
-    c.setName(req.getEmail().split("@")[0]);  // default name
-    c.setEmail(req.getEmail());
-    c.setPhone(null);
-    c.setCustomerType(CustomerType.INDIVIDUAL);
-    c.setDiscountRate(0.0);
-    customerRepo.save(c);
+        Customer c = new Customer();
+        c.setName(req.getEmail().split("@")[0]);
+        c.setEmail(req.getEmail());
+        c.setPhone(null);
+        c.setCustomerType(CustomerType.INDIVIDUAL);
+        c.setDiscountRate(0.0);
+        customerRepo.save(c);
 
-    return "Registered successfully!";
-}
-
+        return "Registered successfully!";
+    }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody AuthRequest req) {
+    public AuthResponse login(@Valid @RequestBody AuthRequest req) {
         User u = userRepo.findByEmail(req.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
