@@ -118,7 +118,7 @@ frontend/
 
 ### Step 1 — Clone the repository
 ```bash
-git clone https://github.com/your-username/vrms.git
+git clone https://github.com/NavneetSingh09/vehicle-rental-system-springboot.git
 cd vrms
 ```
 
